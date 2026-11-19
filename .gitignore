@@ -1,0 +1,11 @@
+# test files
+randomtest.cpp
+test.c
+test2.cpp
+
+# executable files
+minesweeper.exe
+random.exe
+
+# vscode folder
+.vscode/
