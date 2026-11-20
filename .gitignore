@@ -2,10 +2,12 @@
 randomtest.cpp
 test.c
 test2.cpp
+test3.cpp
 
 # executable files
 minesweeper.exe
 random.exe
+test3.exe
 
 # vscode folder
 .vscode/
