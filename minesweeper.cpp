@@ -1,8 +1,8 @@
-// today add win condition, flag counter /15
 #include <iostream>
 #include <vector>
 #include <random>
 #include <string>
+#include <cctype>
 
 // struct definitions
 
@@ -19,16 +19,36 @@ struct Tile
 // function prototypes
 void printgrid(std::vector<std::vector<Tile>> grid);
 void printloss(std::vector<std::vector<Tile>> &grid);
-void scattermines(std::vector<std::vector<Tile>> &grid, int row, int col);
+void scattermines(std::vector<std::vector<Tile>> &grid, int row, int col, int numofmines);
 int countmines(std::vector<std::vector<Tile>> &grid, int row, int col);
 void flood(std::vector<std::vector<Tile>> &grid, int row, int col);
-bool wincheckfunc(std::vector<std::vector<Tile>> grid);
+bool wincheckfunc(std::vector<std::vector<Tile>> grid, int numofmines);
 
 int main(void)
 {
     std::vector<std::vector<Tile>> grid(10, std::vector<Tile>(10));
     // defines an array of arrays of tiles (nested/2d arrays)
 
+    int numofmines = 0; // variable initialization for number of mines
+
+    while(numofmines < 8 || numofmines > 25)
+    {
+        std::cout << "How many mines do you want on the board? (8-25) ";
+        std::cin >> numofmines;
+        if(std::cin.fail())
+        {
+            std::cout << "Input must be a number\n";
+            std::cin.clear();
+            std::cin.ignore(1000, '\n');
+            continue;
+        }
+        std::cin.ignore(1000, '\n');
+        if(numofmines < 8 || numofmines > 25)
+        {
+            std::cout << "Number of mines must be between 8 and 25\n";
+            continue;
+        }
+    }
 
     for(int i = 0; i < 10; i++)
     {
@@ -46,27 +66,15 @@ int main(void)
     // grid[i][j] represents grid[row][column] where row is a char from A-J
     // for example: grid[0][0] is tile A0 and grid[7][3] is tile H3
 
-    std::cout << "  ";
-    for(int i = 0; i < 10; i++)
-    {
-        std::cout << i << " ";
-    }
-    std::cout << "\n";
-    // prints numbers 1-10
+    std::cout << "\033[2J\033[1;1H" << std::flush; 
+    // clears terminal window to set up the game properly
 
-    for(int i = 0; i < 10; i++)
-    {
-        std::cout << static_cast<char>(65+i) << " ";
-        for(int j = 0; j < 10; j++)
-        {
-            std::cout << grid[i][j].displayval << " ";
-        }
-        std::cout << "\n";
-    }
+    printgrid(grid);
     // prints map of mines from the 2d array
 
     bool minesscattered = false;
     int flagcount = 0;
+    int totalmoves = 0;
     // initialize pre-loop variables to use in the loop
 
     while(true)
@@ -110,6 +118,13 @@ int main(void)
         enteredinputcol = input[1];
         // separates the string into 2 values, the row (first char) and the column (second char)
 
+        if(enteredinputrow <= 122 && enteredinputrow >= 97) // if enteredinputrow is between 'a' and 'z' (lowercase)
+        {
+            enteredinputrow -= 32;
+        } 
+        // if the first character is lowercase no error message is given
+        // with these lines it automatically converts to uppercase only if its lowercase
+
         if(!(static_cast<int>(enteredinputcol) >= 48 && static_cast<int>(enteredinputcol) <= 57) || !(static_cast<int>(enteredinputrow) >= 65 && static_cast<int>(enteredinputrow) <= 74))
         {
             std::cout << "This isn't a valid tile. Write tiles in a row column format (ex: E7), and make sure the tile exists\n";
@@ -123,7 +138,7 @@ int main(void)
 
         if(!minesscattered && !flaggingstate)
         {
-            scattermines(grid, inputrow, inputcol);
+            scattermines(grid, inputrow, inputcol, numofmines);
             minesscattered = true;
         }
 
@@ -142,11 +157,13 @@ int main(void)
             if(grid[inputrow][inputcol].flagged)
             {
                 flagcount++;
-                if(flagcount > 15)
+                if(flagcount > numofmines)
                 {
                     grid[inputrow][inputcol].flagged = false;
                     flagcount--;
-                }
+                } 
+                // checks if there are more flags placed than mines
+                // undos the flag placement if so
             }
             else
             {
@@ -181,16 +198,20 @@ int main(void)
             grid[inputrow][inputcol].displayval = '#';
         }
 
+        totalmoves++;
+
         printgrid(grid);
-        std::cout << "Flags placed: " << flagcount << "/15\n";
+        std::cout << "Flags placed: " << flagcount << "/" << numofmines << "\n";
+        std::cout << "Total moves: " << totalmoves << "\n";
         // make this have visual output (tile digged becomes D instead of #, ignore mines for now i just wanna get game loop done)
         // also turn the drawing of board into a function that can just randomly be called on to easier life in game loop
 
-        if(wincheckfunc(grid))
+        if(wincheckfunc(grid, numofmines))
         {
             std::cout << "You Win!\n";
             break;
         }
+        
     }
 
     return 0;
@@ -252,7 +273,7 @@ void printloss(std::vector<std::vector<Tile>> &grid)
     }
 }
 
-void scattermines(std::vector<std::vector<Tile>> &grid, int inputrow, int inputcol)
+void scattermines(std::vector<std::vector<Tile>> &grid, int inputrow, int inputcol, int numofmines)
 {
     std::random_device randomnum;
     std::mt19937 randgen(randomnum());
@@ -261,7 +282,7 @@ void scattermines(std::vector<std::vector<Tile>> &grid, int inputrow, int inputc
     // range is 0-9 since thats the range of the grid (x and y)
     // call upon the random number generator with: dist(randgen)
 
-    for(int minecount = 0; minecount < 15; minecount++)
+    for(int minecount = 0; minecount < numofmines; minecount++)
     {
         int randrow = dist(randgen);
         int randcol = dist(randgen);
@@ -280,9 +301,6 @@ void scattermines(std::vector<std::vector<Tile>> &grid, int inputrow, int inputc
         if(canputmine == true && !grid[randrow][randcol].ismine)
         {
             grid[randrow][randcol].ismine = true;
-            std::cout << grid[randrow][randcol].rowval << grid[randrow][randcol].colval << "\n";
-            // this std::cout prints all the tiles with mines
-            // good for debugging but DELETE WHEN READY TO SHIP
             continue;
         }
         else
@@ -361,9 +379,11 @@ void flood(std::vector<std::vector<Tile>> &grid, int row, int col)
     }
 }
 
-bool wincheckfunc(std::vector<std::vector<Tile>> grid)
+bool wincheckfunc(std::vector<std::vector<Tile>> grid, int numofmines)
 {
     int dugcount = 0;
+    int tiledugwincheck = 100 - numofmines;
+    // total tiles is 100, wincheck number should be 100 minus the number of mines
     for(int i = 0; i < 10; i++)
     {
         for(int j = 0; j < 10; j++)
@@ -374,7 +394,7 @@ bool wincheckfunc(std::vector<std::vector<Tile>> grid)
             }
         }
     }
-    if(dugcount >= 85)
+    if(dugcount >= tiledugwincheck)
     {
         return true;
     }
