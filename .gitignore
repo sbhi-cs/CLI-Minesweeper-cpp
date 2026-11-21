@@ -3,11 +3,13 @@ randomtest.cpp
 test.c
 test2.cpp
 test3.cpp
+ansitest.cpp
 
 # executable files
 minesweeper.exe
 random.exe
 test3.exe
+ansitest.exe
 
 # vscode folder
 .vscode/

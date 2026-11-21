@@ -1,6 +1,4 @@
-// IMPORTANT NOTE: TOMORROW PUSH ALL CODE TO GIT AND DEVLOG HOURS
-// NOT DOING RIGHT NOW BECAUSE ITS 1AM AND IM TIRED
-// tomorrow add win condition, smarter mine positioning, and flag counting (/15)
+// today add win condition, flag counter /15
 #include <iostream>
 #include <vector>
 #include <random>
@@ -20,19 +18,16 @@ struct Tile
 
 // function prototypes
 void printgrid(std::vector<std::vector<Tile>> grid);
+void printloss(std::vector<std::vector<Tile>> &grid);
+void scattermines(std::vector<std::vector<Tile>> &grid, int row, int col);
 int countmines(std::vector<std::vector<Tile>> &grid, int row, int col);
 void flood(std::vector<std::vector<Tile>> &grid, int row, int col);
+bool wincheckfunc(std::vector<std::vector<Tile>> grid);
 
 int main(void)
 {
     std::vector<std::vector<Tile>> grid(10, std::vector<Tile>(10));
     // defines an array of arrays of tiles (nested/2d arrays)
-
-    std::random_device randomnum;
-    std::mt19937 randgen(randomnum());
-    std::uniform_int_distribution<> dist(0, 9);
-    // creates a random number generator
-    // now to generate a random number from 0-9, call dist(randgen)
 
 
     for(int i = 0; i < 10; i++)
@@ -50,29 +45,6 @@ int main(void)
     // inputs all the values into the grid
     // grid[i][j] represents grid[row][column] where row is a char from A-J
     // for example: grid[0][0] is tile A0 and grid[7][3] is tile H3
-
-
-    for(int minecount = 0; minecount < 15; minecount++)
-    {
-        int row = dist(randgen);
-        int col = dist(randgen);
-
-        if(grid[row][col].ismine == false)
-        {
-            grid[row][col].ismine = true;
-            std::cout << grid[row][col].rowval << grid[row][col].colval << "\n";
-            // this std::cout prints all the tiles with mines
-            // good for debugging but DELETE WHEN READY TO SHIP
-            continue;
-        }
-        else
-        {
-            minecount--;
-        }
-    }
-    // randomly scatters mines by generating 2 random values from 0-9, then putting a mine in the tile corresponding to rand1, rand2 
-    // ex: (grid[row][col])
-    // maybe move this part after the first click so user doesnt die first try
 
     std::cout << "  ";
     for(int i = 0; i < 10; i++)
@@ -92,6 +64,10 @@ int main(void)
         std::cout << "\n";
     }
     // prints map of mines from the 2d array
+
+    bool minesscattered = false;
+    int flagcount = 0;
+    // initialize pre-loop variables to use in the loop
 
     while(true)
     {
@@ -145,6 +121,12 @@ int main(void)
         inputcol = static_cast<int>(enteredinputcol) - 48;
         // converts the inputs (chars) into ints that i can use to call on that specific tile
 
+        if(!minesscattered && !flaggingstate)
+        {
+            scattermines(grid, inputrow, inputcol);
+            minesscattered = true;
+        }
+
         if(grid[inputrow][inputcol].dug || (grid[inputrow][inputcol].flagged && flaggingstate == false))
         {
             std::cout << "You already dug or flagged this tile\n";
@@ -157,9 +139,21 @@ int main(void)
         if(flaggingstate == true)
         {
             grid[inputrow][inputcol].flagged = !grid[inputrow][inputcol].flagged;
+            if(grid[inputrow][inputcol].flagged)
+            {
+                flagcount++;
+                if(flagcount > 15)
+                {
+                    grid[inputrow][inputcol].flagged = false;
+                    flagcount--;
+                }
+            }
+            else
+            {
+                flagcount--;
+            }
             goto flagskip;
         }
-
         minesaround = countmines(grid, inputrow, inputcol);
 
         if(grid[inputrow][inputcol].displayval != 'M')
@@ -169,6 +163,7 @@ int main(void)
         } // if current tile is not a mine it updates the display value to be equal to minesaround (minesaround + '0' turns the int to a char)
         else
         {
+            printloss(grid);
             printgrid(grid);
             std::cout << "You Lose!\n";
             break;
@@ -187,11 +182,16 @@ int main(void)
         }
 
         printgrid(grid);
-        std::cout << grid[inputrow][inputcol].rowval << grid[inputrow][inputcol].colval << "\n";
+        std::cout << "Flags placed: " << flagcount << "/15\n";
         // make this have visual output (tile digged becomes D instead of #, ignore mines for now i just wanna get game loop done)
         // also turn the drawing of board into a function that can just randomly be called on to easier life in game loop
-    }
 
+        if(wincheckfunc(grid))
+        {
+            std::cout << "You Win!\n";
+            break;
+        }
+    }
 
     return 0;
 }
@@ -200,7 +200,8 @@ int main(void)
 
 void printgrid(std::vector<std::vector<Tile>> grid)
 {
-        std::cout << "  ";
+    std::cout << "  ";
+
     for(int i = 0; i < 10; i++)
     {
         std::cout << i << " ";
@@ -213,11 +214,84 @@ void printgrid(std::vector<std::vector<Tile>> grid)
         std::cout << static_cast<char>(65+i) << " "; // letter for every new row (row value)
         for(int j = 0; j < 10; j++)
         {
-            std::cout << grid[i][j].displayval << " ";
+            char displayval = grid[i][j].displayval;
+            std::string colour;
+            switch(displayval)
+            {
+                case '0': colour = "\033[90m"; break; // dark grey (bright black)
+                case '1': colour = "\033[94m"; break; // bright blue
+                case '2': colour = "\033[32m"; break; // green
+                case '3': colour = "\033[91m"; break; // bright red
+                case '4': colour = "\033[34m"; break; // dark blue
+                case '5': colour = "\033[31m"; break; // dark red
+                case '6': colour = "\033[36m"; break; // turquoise i think
+                case '7': colour = "\033[35m"; break; // pink i think
+                case '8': colour = "\033[37m"; break; // light grey (dark white)
+                case 'M': colour = "\033[33m"; break; // yellow mines
+                case 'F': colour = "\033[93m"; break; // bright yellow flags
+                default: colour =  "\033[0m";  break; // basic terminal colour for everything else not listed
+            }
+            std::cout << colour << displayval << "\033[0m" << " ";
         }
         std::cout << "\n";
     }
     // prints grid itself
+}
+
+void printloss(std::vector<std::vector<Tile>> &grid)
+{
+    for(int i = 0; i < 10; i++)
+    {
+        for(int j = 0; j < 10; j++)
+        {
+            if(grid[i][j].ismine == true)
+            {
+                grid[i][j].displayval = 'M';
+            }
+        }
+    }
+}
+
+void scattermines(std::vector<std::vector<Tile>> &grid, int inputrow, int inputcol)
+{
+    std::random_device randomnum;
+    std::mt19937 randgen(randomnum());
+    std::uniform_int_distribution<> dist(0, 9);
+    // sets up the random number generator to randomly scatter mines
+    // range is 0-9 since thats the range of the grid (x and y)
+    // call upon the random number generator with: dist(randgen)
+
+    for(int minecount = 0; minecount < 15; minecount++)
+    {
+        int randrow = dist(randgen);
+        int randcol = dist(randgen);
+        bool canputmine = true;
+
+        for(int i = -1; i < 2; i++)
+        {
+            for(int j = -1; j < 2; j++)
+            {
+                if(inputrow+i == randrow && inputcol+j == randcol)
+                {
+                    canputmine = false;
+                }
+            }
+        }
+        if(canputmine == true && !grid[randrow][randcol].ismine)
+        {
+            grid[randrow][randcol].ismine = true;
+            std::cout << grid[randrow][randcol].rowval << grid[randrow][randcol].colval << "\n";
+            // this std::cout prints all the tiles with mines
+            // good for debugging but DELETE WHEN READY TO SHIP
+            continue;
+        }
+        else
+        {
+            minecount--;
+        }
+    }
+    // randomly scatters mines by generating 2 random values from 0-9, then putting a mine in the tile corresponding to rand1, rand2 
+    // ex: (grid[row][col])
 }
 
 int countmines(std::vector<std::vector<Tile>> &grid, int row, int col)
@@ -284,5 +358,28 @@ void flood(std::vector<std::vector<Tile>> &grid, int row, int col)
     else
     {
         return;
+    }
+}
+
+bool wincheckfunc(std::vector<std::vector<Tile>> grid)
+{
+    int dugcount = 0;
+    for(int i = 0; i < 10; i++)
+    {
+        for(int j = 0; j < 10; j++)
+        {
+            if(grid[i][j].dug)
+            {
+                dugcount++;
+            }
+        }
+    }
+    if(dugcount >= 85)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
     }
 }
