@@ -182,6 +182,8 @@ int main(void)
         {
             printloss(grid);
             printgrid(grid);
+            std::cout << "Flags placed: " << flagcount << "/" << numofmines << "\n";
+            std::cout << "Total moves: " << totalmoves << "\n";
             std::cout << "You Lose!\n";
             break;
         } // if tile is a mine it ends the game
@@ -203,8 +205,6 @@ int main(void)
         printgrid(grid);
         std::cout << "Flags placed: " << flagcount << "/" << numofmines << "\n";
         std::cout << "Total moves: " << totalmoves << "\n";
-        // make this have visual output (tile digged becomes D instead of #, ignore mines for now i just wanna get game loop done)
-        // also turn the drawing of board into a function that can just randomly be called on to easier life in game loop
 
         if(wincheckfunc(grid, numofmines))
         {
