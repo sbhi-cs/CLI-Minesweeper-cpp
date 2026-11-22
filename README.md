@@ -16,6 +16,9 @@
     * ANSI escape codes (used to colour the text)
 * Also I kind of just like minesweeper and wanted to make my own version
 
+## Download link (Github Release)
+* <https://github.com/sbhi-cs/CLI-Minesweeper-cpp/releases/tag/V1.0>
+
 ## How to play
 ### For yalls that havent played minesweeper before, here's how:
 * You start by digging any tile, and a bunch of tiles will open up, some with numbers (above 0)
