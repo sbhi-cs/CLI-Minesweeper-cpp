@@ -43,7 +43,8 @@
 * Also im pretty sure once you reach a certain number of mines it becomes impossible to actually solve using logic
 
 ## Images
-* Insert these through github, its easier
+<img width="418" height="302" alt="Minesweeper mid-game" src="https://github.com/user-attachments/assets/27d71900-948a-4d6b-90cf-98fe87e9eb26" />
+
 
 # Have fun!
 
