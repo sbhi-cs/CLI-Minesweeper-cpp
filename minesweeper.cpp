@@ -185,6 +185,9 @@ int main(void)
             std::cout << "Flags placed: " << flagcount << "/" << numofmines << "\n";
             std::cout << "Total moves: " << totalmoves << "\n";
             std::cout << "You Lose!\n";
+            std::cout << "Input anything to quit: ";
+            std::string quitter;
+            std::cin >> quitter;
             break;
         } // if tile is a mine it ends the game
         
@@ -209,6 +212,9 @@ int main(void)
         if(wincheckfunc(grid, numofmines))
         {
             std::cout << "You Win!\n";
+            std::cout << "Input anything to quit: ";
+            std::string quitter;
+            std::cin >> quitter;
             break;
         }
         
