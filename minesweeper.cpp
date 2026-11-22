@@ -4,7 +4,7 @@
 #include <string>
 #include <cctype>
 
-// struct definitions
+// tile struct definition
 
 struct Tile
 {

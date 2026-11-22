@@ -40,6 +40,7 @@
 * This was cool to make honestly
 * A highlight was when I figured out ANSI colour codes and accidentally made my terminal blue, that was really funny
 * I'm also super proud of myself for implementing recirsive DFS because that was super intimidating
+* Also im pretty sure once you reach a certain number of mines it becomes impossible to actually solve using logic
 
 ## Images
 * Insert these through github, its easier
